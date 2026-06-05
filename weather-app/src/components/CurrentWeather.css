@@ -1,0 +1,126 @@
+.current-weather-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.weather-icon {
+  font-size: 80px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.temp-section {
+  flex: 1;
+}
+
+.temperature {
+  font-size: 60px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+.feels-like {
+  font-size: 16px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.location-info {
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 20px;
+}
+
+.location-info h2 {
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.description {
+  font-size: 16px;
+  color: #777;
+  text-transform: capitalize;
+}
+
+.weather-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 15px;
+  transition: transform 0.3s ease;
+}
+
+.detail-item:hover {
+  transform: translateY(-5px);
+}
+
+.detail-icon {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .current-weather-card {
+    padding: 20px;
+  }
+
+  .weather-main {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .weather-icon {
+    font-size: 60px;
+  }
+
+  .temperature {
+    font-size: 48px;
+  }
+
+  .location-info h2 {
+    font-size: 22px;
+  }
+
+  .weather-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

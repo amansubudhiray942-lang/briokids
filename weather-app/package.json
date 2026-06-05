@@ -1,0 +1,20 @@
+{
+  "name": "weather-dashboard",
+  "version": "1.0.0",
+  "description": "Weather Dashboard App with OpenWeatherMap API",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --root weather-app",
+    "build": "vite build --root weather-app",
+    "preview": "vite preview --root weather-app"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.3.9"
+  }
+}
