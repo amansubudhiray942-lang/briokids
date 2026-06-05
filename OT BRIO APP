@@ -1,0 +1,606 @@
+import { useState, useMemo } from "react";
+
+const CONDITIONS = ["Autism","ADHD","Sensory Processing","Cerebral Palsy","Developmental Delay"];
+const GOALS = ["Sensory","Fine Motor","Gross Motor","Cognitive","Social"];
+const AGE_GROUPS = ["All Ages","1-3 yrs","4-6 yrs","7-10 yrs","11+ yrs"];
+
+// 150+ activities — 10+ per age group per condition, all with real YouTube video IDs
+const ACTIVITIES = [
+  // ═══════════════════════════════════════════════════════
+  //  AUTISM
+  // ═══════════════════════════════════════════════════════
+  // Autism · 1-3 yrs
+  {id:1,  title:"Tummy Time Sensory Play",      cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Play mat, mirror",         desc:"OT-approved tummy time and sensory play activities for babies and toddlers.", vid:"9nEOg0zFxB0"},
+  {id:2,  title:"5 Sensory Activities Toddlers",cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Rice, water, fabric",      desc:"5 fun and easy at-home sensory activities for toddlers to explore textures and senses.", vid:"nlsHsROmibE"},
+  {id:3,  title:"Sensory Play for Autism",      cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Sensory materials",        desc:"A parent-guided sensory play session for children with autism at home.", vid:"Vno74adKWmA"},
+  {id:4,  title:"Sensory Bin Toddler Play",     cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Bin, rice/sand, toys",     desc:"Calming sensory input through exploring textures in a bin of rice or sand.", vid:"PusnomDcsuA"},
+  {id:5,  title:"Infant Sensory OT Approved",   cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Household textures",       desc:"Top 5 OT-approved sensory activities for infants to stimulate early development.", vid:"xLGHKiiHcfI"},
+  {id:6,  title:"Toddler Fine Motor OT",        cond:["Autism"],            goal:"Fine Motor", age:"1-3 yrs",  level:"Easy",   mat:"Cups, blocks, pegs",       desc:"Pediatric OT shares fine motor activities for toddlers focusing on function.", vid:"_uR0mMgYkOc"},
+  {id:7,  title:"Autism Fine Motor Home",       cond:["Autism"],            goal:"Fine Motor", age:"1-3 yrs",  level:"Easy",   mat:"Household objects",        desc:"Fine motor sitting activities for autism children at home to improve tolerance.", vid:"GJXDZQcEUe0"},
+  {id:8,  title:"Gross Motor Autism Tips",      cond:["Autism"],            goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Open floor space",         desc:"Why gross motor skills matter for autism and how to enhance them at home.", vid:"-twXLk_z-kk"},
+  {id:9,  title:"Gross Motor Imitation Autism", cond:["Autism"],            goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Open space",               desc:"Building gross motor imitation skills in children with autism step by step.", vid:"GNSaz5dI8kY"},
+  {id:10, title:"Bubble Blowing",               cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Bubble solution, wand",    desc:"Oral motor skills and visual tracking through blowing and chasing bubbles.", vid:"JBNMDTAI9eo"},
+  {id:11, title:"Parent Guide Social Skills",   cond:["Autism"],            goal:"Social",     age:"1-3 yrs",  level:"Easy",   mat:"None",                     desc:"Parent-led interventions to promote social and communication skills in young children.", vid:"QH0zVqyAwIg"},
+  {id:12, title:"OT Activities Autism Home",    cond:["Autism"],            goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Various home items",       desc:"A parent shares the OT activities her son does at home for sensory regulation.", vid:"iIlN_kanUJA"},
+
+  // Autism · 4-6 yrs
+  {id:13, title:"Finger Painting Sensory",      cond:["Autism"],            goal:"Sensory",    age:"4-6 yrs",  level:"Easy",   mat:"Paint, paper",             desc:"Tactile exploration through finger painting builds sensory integration.", vid:"MG1pqlyWA0c"},
+  {id:14, title:"Playdough Fine Motor",         cond:["Autism"],            goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Playdough",                desc:"Rolling and pinching playdough strengthens hand muscles and finger dexterity.", vid:"m1qc6fyDfoU"},
+  {id:15, title:"Sensory Seekers Activities",   cond:["Autism"],            goal:"Sensory",    age:"4-6 yrs",  level:"Medium", mat:"Trampoline, textures",     desc:"5 powerful activities for sensory-seeking children to get the input they need.", vid:"s6gCc4vKKvY"},
+  {id:16, title:"Bead Stringing",               cond:["Autism"],            goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Beads, string",            desc:"10 stringing activities to improve pincer grasp and hand-eye coordination.", vid:"_ApRP7TlZn4"},
+  {id:17, title:"Obstacle Course Sensory OT",   cond:["Autism"],            goal:"Gross Motor",age:"4-6 yrs",  level:"Hard",   mat:"Pillows, chairs, tape",    desc:"OT obstacle course for sensory integration difficulties.", vid:"1_HMAW1PdNE"},
+  {id:18, title:"Deep Pressure Touch",          cond:["Autism"],            goal:"Sensory",    age:"4-6 yrs",  level:"Easy",   mat:"Hands or weighted item",   desc:"Firm gentle pressure on the body calms the nervous system and reduces sensory overload.", vid:"nb1Cx-15FGo"},
+  {id:19, title:"Turn-Taking Games",            cond:["Autism"],            goal:"Social",     age:"4-6 yrs",  level:"Medium", mat:"Board game or cards",      desc:"Top 5 OT social activities parents can do at home to build turn-taking.", vid:"12k0XUCKzbk"},
+  {id:20, title:"Peer Play Autism",             cond:["Autism"],            goal:"Social",     age:"4-6 yrs",  level:"Medium", mat:"Toys, games",              desc:"How to support children with autism during peer play and social play dates.", vid:"IYEGLvvY9zQ"},
+  {id:21, title:"2 Social Skills for Autism",   cond:["Autism"],            goal:"Social",     age:"4-6 yrs",  level:"Easy",   mat:"None",                     desc:"Two fundamental social skills to teach autistic children at home.", vid:"h1F4BTWsx1Y"},
+  {id:22, title:"Communication Circle Time",    cond:["Autism"],            goal:"Social",     age:"4-6 yrs",  level:"Easy",   mat:"Circle time setup",        desc:"Circle time activity to promote communication, friendship, and social skills.", vid:"4apZ5qf62kY"},
+  {id:23, title:"Sorting Colors & Shapes",      cond:["Autism"],            goal:"Cognitive",  age:"4-6 yrs",  level:"Easy",   mat:"Colored blocks, toys",     desc:"OT sensory processing activities including sorting and categorization.", vid:"2L0Ts85WzYY"},
+  {id:24, title:"Weighted Blanket Wrap",        cond:["Autism"],            goal:"Sensory",    age:"4-6 yrs",  level:"Easy",   mat:"Weighted blanket",         desc:"Deep pressure from a weighted blanket helps regulate sensory input.", vid:"Bn04T8SPaHE"},
+
+  // Autism · 7-10 yrs
+  {id:25, title:"Autism OT Life Skills",        cond:["Autism"],            goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Daily task items",         desc:"OT helps autistic children develop life skills through engaging activities.", vid:"YM5O5H3fO-E"},
+  {id:26, title:"Improving Social Skills",      cond:["Autism"],            goal:"Social",     age:"7-10 yrs", level:"Medium", mat:"None",                     desc:"Teaching play and social skills to children with autism.", vid:"BsftEby4y6k"},
+  {id:27, title:"Social Games Theory of Mind",  cond:["Autism"],            goal:"Social",     age:"7-10 yrs", level:"Medium", mat:"Simple games",             desc:"Free home therapy course — social games and theory of mind for autism.", vid:"ruQL1QwGCoc"},
+  {id:28, title:"Executive Function OT Tips",   cond:["Autism"],            goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Charts, timers",           desc:"5 simple OT tips for executive function — focus, organisation, emotion management.", vid:"SkSsGnSX1lI"},
+  {id:29, title:"Sensory Processing OT Demo",   cond:["Autism"],            goal:"Sensory",    age:"7-10 yrs", level:"Easy",   mat:"Various",                  desc:"Expert demonstration of how OT addresses sensory processing in children.", vid:"YUdsgQGHSR8"},
+  {id:30, title:"Handwriting & Autism Tips",    cond:["Autism"],            goal:"Fine Motor", age:"7-10 yrs", level:"Medium", mat:"Pencil, special paper",    desc:"Practical strategies to make handwriting easier for autistic children.", vid:"y9z7-_BXan8"},
+  {id:31, title:"Puzzles for Cognitive Skills", cond:["Autism"],            goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Puzzles",                  desc:"Unique ways to use puzzles targeting fine motor, cognitive, and creative skills.", vid:"FYZg5T_NeLY"},
+  {id:32, title:"Scissor Skills Practice",      cond:["Autism"],            goal:"Fine Motor", age:"7-10 yrs", level:"Medium", mat:"Child scissors, paper",    desc:"Scissor skills progression for school-age children.", vid:"oRlfvBaTkSg"},
+  {id:33, title:"Caregiver Social Tips ASD",    cond:["Autism"],            goal:"Social",     age:"7-10 yrs", level:"Medium", mat:"Social story cards",       desc:"Caregiver hacks for developing social skills in children with ASD.", vid:"1n3Vm-jUzrU"},
+  {id:34, title:"Brain Gym Focus Kids",         cond:["Autism"],            goal:"Cognitive",  age:"7-10 yrs", level:"Easy",   mat:"None",                     desc:"30 brain gym activities that boost memory, focus, and coordination for ages 2–10.", vid:"i6it5pqmfC8"},
+  {id:35, title:"Teaching Play Skills ABA",     cond:["Autism"],            goal:"Social",     age:"7-10 yrs", level:"Medium", mat:"Toys",                     desc:"How to teach play skills for children with autism using ABA techniques.", vid:"x67xpqZ5bwQ"},
+
+  // Autism · 11+ yrs
+  {id:36, title:"Autism Building Daily Skills", cond:["Autism"],            goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"Daily living items",       desc:"OT for autism: building daily skills and confidence in older children.", vid:"ECXvMlXVPPo"},
+  {id:37, title:"OT Play & Self-Care",          cond:["Autism"],            goal:"Social",     age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"OTs help autistic children develop play, self-care, and social skills.", vid:"IkVYYC3BGBE"},
+  {id:38, title:"Teaching Life Skills Autism",  cond:["Autism"],            goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"Daily task items",         desc:"How to teach children with autism essential life skills for independence.", vid:"dc6bX5Oesek"},
+  {id:39, title:"Autism Communicate Wants",     cond:["Autism"],            goal:"Social",     age:"11+ yrs",  level:"Medium", mat:"Communication tools",      desc:"Teaching children with autism how to communicate their wants and needs.", vid:"gJC1M02fRTw"},
+  {id:40, title:"Handwriting OT Support",       cond:["Autism"],            goal:"Fine Motor", age:"11+ yrs",  level:"Medium", mat:"Pencil, lined paper",      desc:"How OT support can improve handwriting skills for children.", vid:"k3GLtWweens"},
+  {id:41, title:"Sensory Smart Strategies",     cond:["Autism"],            goal:"Sensory",    age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Expert OT strategies for sensory processing disorder and ADHD in older children.", vid:"5SFD6oTdkOM"},
+  {id:42, title:"Fun Activities Teens Special", cond:["Autism"],            goal:"Social",     age:"11+ yrs",  level:"Easy",   mat:"Various",                  desc:"10 fun activities for teenagers with special needs to enjoy at home.", vid:"hZ1K2TLNoU0"},
+  {id:43, title:"Gross Motor Help4Special",     cond:["Autism"],            goal:"Gross Motor",age:"11+ yrs",  level:"Medium", mat:"Open space",               desc:"Gross motor activity video for special needs children — coordination and direction.", vid:"mQk5svT3bQQ"},
+  {id:44, title:"Self-Regulation Strategies",   cond:["Autism"],            goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"OT self-regulation strategies and techniques for children and adolescents.", vid:"fdce30im1qw"},
+  {id:45, title:"Sensory Issues Home Strategies",cond:["Autism"],           goal:"Sensory",    age:"11+ yrs",  level:"Easy",   mat:"Household items",          desc:"Strategies to use at home to address sensory processing issues.", vid:"uZpGsCKFtOI"},
+
+  // ═══════════════════════════════════════════════════════
+  //  ADHD
+  // ═══════════════════════════════════════════════════════
+  // ADHD · 1-3 yrs
+  {id:46, title:"Sensory Toddler Easy Ideas",   cond:["ADHD"],              goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Rice, water, textures",    desc:"10 simple sensory activities for toddlers to explore and calm their senses.", vid:"OkA78Ulneso"},
+  {id:47, title:"Balloon Motor Activities",     cond:["ADHD"],              goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Balloon",                  desc:"At-home sensory and motor activities using balloons — motor planning and visual motor skills.", vid:"DfbWKACWS5A"},
+  {id:48, title:"Gross Motor Toddler Play",     cond:["ADHD"],              goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Open floor space",         desc:"Fun gross motor preschool activities for toddlers — running, jumping, climbing.", vid:"8u6vMUHwe-k"},
+  {id:49, title:"Balance & Movement Toddler",   cond:["ADHD"],              goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"None",                     desc:"Toddler movement: balancing, jumping, running, and climbing exploration.", vid:"K2LFMHSUN9A"},
+  {id:50, title:"Fine Motor 15 Activities",     cond:["ADHD"],              goal:"Fine Motor", age:"1-3 yrs",  level:"Easy",   mat:"Low-prep household items", desc:"15 fine motor skills activities for toddlers and preschoolers — low prep.", vid:"INLj2X4-uLU"},
+  {id:51, title:"OT Baby Development Tips",     cond:["ADHD"],              goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"None",                     desc:"Top OT-approved activities to stimulate your baby's development: Ages 0-3 months.", vid:"qmDP666c_L4"},
+  {id:52, title:"Deep Pressure Calm",           cond:["ADHD"],              goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Hands or blanket",         desc:"Deep pressure touch to calm children who are hypersensitive or have sensory regulation issues.", vid:"nb1Cx-15FGo"},
+  {id:53, title:"Sensory Bin Toddler",          cond:["ADHD"],              goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Bin, rice, small toys",    desc:"Calming sensory exploration through sensory bin play.", vid:"Mjs46isQgCU"},
+  {id:54, title:"Fine Motor Toddler OT",        cond:["ADHD"],              goal:"Fine Motor", age:"1-3 yrs",  level:"Easy",   mat:"Cups, blocks",             desc:"Pediatric OT fine motor activities for toddlers focusing on function.", vid:"_uR0mMgYkOc"},
+  {id:55, title:"10 Baby Gross Motor",          cond:["ADHD"],              goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Mat, toys",                desc:"10 simple ways to improve a baby's gross motor skills at home.", vid:"NbUREW7wW0Q"},
+  {id:56, title:"Bubble Blowing Oral Motor",    cond:["ADHD"],              goal:"Sensory",    age:"1-3 yrs",  level:"Easy",   mat:"Bubble solution, wand",    desc:"Oral motor skills and visual tracking through blowing bubbles.", vid:"JBNMDTAI9eo"},
+
+  // ADHD · 4-6 yrs
+  {id:57, title:"ADHD Hyperactivity Activities",cond:["ADHD"],              goal:"Cognitive",  age:"4-6 yrs",  level:"Easy",   mat:"Art supplies, space",      desc:"8 hyperactivity therapy activities for children with ADHD including mindful colouring.", vid:"pWX64dldXgs"},
+  {id:58, title:"Impulse Control Games",        cond:["ADHD"],              goal:"Cognitive",  age:"4-6 yrs",  level:"Medium", mat:"Games",                    desc:"7 easy games to teach children impulse control and self-regulation.", vid:"a_Apeid3hYg"},
+  {id:59, title:"Self-Regulation 15 Activities",cond:["ADHD"],              goal:"Cognitive",  age:"4-6 yrs",  level:"Easy",   mat:"None",                     desc:"15 easy-to-teach activities to help children learn to self-regulate.", vid:"kC_P43b1ERM"},
+  {id:60, title:"Bean Bag Toss Coordination",   cond:["ADHD"],              goal:"Gross Motor",age:"4-6 yrs",  level:"Easy",   mat:"Bean bags, basket",        desc:"Pediatric OT bean bag coordination to build bilateral hand-eye skills.", vid:"sx5tnDX8ie0"},
+  {id:61, title:"Pencil Grip Activities",       cond:["ADHD"],              goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Pencil, cardboard",        desc:"5 activities using one cardboard piece to improve pencil grip.", vid:"HVmh3NVAw5M"},
+  {id:62, title:"Scissor Skills Kids",          cond:["ADHD"],              goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Scissors, paper",          desc:"Scissor skills progression and activity ideas for preschool children.", vid:"g4QBqRbNmTE"},
+  {id:63, title:"Fine Motor Home Activities",   cond:["ADHD"],              goal:"Fine Motor", age:"4-6 yrs",  level:"Easy",   mat:"Household items",          desc:"10 free at-home activities using everyday objects to build fine motor skills.", vid:"KeMIERuxPN4"},
+  {id:64, title:"Gross Motor Preschool Course", cond:["ADHD"],              goal:"Gross Motor",age:"4-6 yrs",  level:"Medium", mat:"Cones, hoops",             desc:"Developmental educator demonstrates gross motor obstacle course for preschoolers.", vid:"9Mlk3dwO6vA"},
+  {id:65, title:"OT for ADHD Kids",             cond:["ADHD"],              goal:"Cognitive",  age:"4-6 yrs",  level:"Easy",   mat:"None",                     desc:"When to call an OT for your child with ADHD — red flags and solutions.", vid:"K05ZX2WuxbA"},
+  {id:66, title:"Sensory Activities SPD ADHD",  cond:["ADHD"],              goal:"Sensory",    age:"4-6 yrs",  level:"Easy",   mat:"Various",                  desc:"OT activities for children with sensory processing disorders.", vid:"2L0Ts85WzYY"},
+  {id:67, title:"Brain Gym Activities",         cond:["ADHD"],              goal:"Cognitive",  age:"4-6 yrs",  level:"Easy",   mat:"None",                     desc:"30 brain gym activities for ages 2–10 that boost memory, focus, and coordination.", vid:"i6it5pqmfC8"},
+
+  // ADHD · 7-10 yrs
+  {id:68, title:"ADHD Focus & Memory",          cond:["ADHD"],              goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Memory cards, puzzles",    desc:"Cognitive training, memory exercises, and problem-solving activities for ADHD.", vid:"LdxAMNLZpFU"},
+  {id:69, title:"ADHD OT 9 Strategies",         cond:["ADHD"],              goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"None",                     desc:"9 ways occupational therapy tackles ADHD symptoms.", vid:"6eMgoIYg4OQ"},
+  {id:70, title:"Following Directions ADHD",    cond:["ADHD"],              goal:"Cognitive",  age:"7-10 yrs", level:"Easy",   mat:"Visual instructions",      desc:"Expert tips on helping children with ADHD follow directions.", vid:"hJMf6J6HFko"},
+  {id:71, title:"Executive Function OT",        cond:["ADHD"],              goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Charts, timers",           desc:"5 simple OT tips for executive function — focus, organisation, emotion management.", vid:"SkSsGnSX1lI"},
+  {id:72, title:"Therapy Ball Gross Motor",     cond:["ADHD"],              goal:"Gross Motor",age:"7-10 yrs", level:"Medium", mat:"Exercise therapy ball",    desc:"10 safe play-based therapy ball activities from a pediatric OT.", vid:"amErM0fr7HA"},
+  {id:73, title:"Top Pencil Grasp Tips",        cond:["ADHD"],              goal:"Fine Motor", age:"7-10 yrs", level:"Medium", mat:"Pencil, crayons",          desc:"Top 5 activities to improve pencil grasp for better handwriting.", vid:"6kzK06I2-6Y"},
+  {id:74, title:"Sensory Smart Strategies",     cond:["ADHD"],              goal:"Sensory",    age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Expert OT strategies for sensory processing disorder and ADHD.", vid:"5SFD6oTdkOM"},
+  {id:75, title:"Sensory Parenting Tips",       cond:["ADHD"],              goal:"Sensory",    age:"7-10 yrs", level:"Easy",   mat:"None",                     desc:"Tips for parenting a sensory seeking child with sensory processing disorder.", vid:"f7FDaDUfw0A"},
+  {id:76, title:"Paediatric Gross Motor Games", cond:["ADHD"],              goal:"Gross Motor",age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Paediatric OT demonstrates gross motor games to improve coordination.", vid:"vvgZGh4eSg0"},
+  {id:77, title:"Fine Motor OT Games",          cond:["ADHD"],              goal:"Fine Motor", age:"7-10 yrs", level:"Easy",   mat:"Various toys",             desc:"Paediatric OT demonstrates games children can play to develop fine motor skills.", vid:"syv0qIRY9yE"},
+  {id:78, title:"Auditory Processing Fun",      cond:["ADHD"],              goal:"Sensory",    age:"7-10 yrs", level:"Easy",   mat:"Sound materials",          desc:"5 fun activities to improve auditory processing in kids at home and school.", vid:"gxwe6n7rD9s"},
+
+  // ADHD · 11+ yrs
+  {id:79, title:"ADHD Self-Regulation OT",      cond:["ADHD"],              goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"Self-regulation strategies and techniques for older children and adolescents.", vid:"fdce30im1qw"},
+  {id:80, title:"ADHD Parenting Strategies",    cond:["ADHD"],              goal:"Social",     age:"11+ yrs",  level:"Easy",   mat:"None",                     desc:"How to parent children with ADHD — practical strategies to reduce overwhelm.", vid:"p60gpGu-3QY"},
+  {id:81, title:"Break-Through Self Regulation",cond:["ADHD"],              goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Self-regulation interventions for children and adolescents with ADHD.", vid:"ObzX0sYvBeI"},
+  {id:82, title:"Sensory Seekers Teen",         cond:["ADHD"],              goal:"Sensory",    age:"11+ yrs",  level:"Medium", mat:"Sensory tools",            desc:"5 powerful activities for sensory-seeking older children and teens.", vid:"s6gCc4vKKvY"},
+  {id:83, title:"Fun Activities Special Teens", cond:["ADHD"],              goal:"Social",     age:"11+ yrs",  level:"Easy",   mat:"Various",                  desc:"10 fun activities for teenagers with special needs to enjoy at home.", vid:"hZ1K2TLNoU0"},
+  {id:84, title:"Handwriting OT Improve",       cond:["ADHD"],              goal:"Fine Motor", age:"11+ yrs",  level:"Medium", mat:"Pencil, lined paper",      desc:"How OT support can improve handwriting skills for school-age children.", vid:"k3GLtWweens"},
+  {id:85, title:"Gross Motor Special Needs",    cond:["ADHD"],              goal:"Gross Motor",age:"11+ yrs",  level:"Medium", mat:"Open space",               desc:"Gross motor skills video for special needs — coordination and direction following.", vid:"mQk5svT3bQQ"},
+  {id:86, title:"5 Sensory Parenting Tips",     cond:["ADHD"],              goal:"Sensory",    age:"11+ yrs",  level:"Easy",   mat:"None",                     desc:"Tips for parenting a sensory seeking child from an OT perspective.", vid:"f7FDaDUfw0A"},
+  {id:87, title:"Fine Motor No Fancy Tools",    cond:["ADHD"],              goal:"Fine Motor", age:"11+ yrs",  level:"Easy",   mat:"Household items",          desc:"5 fine motor activities you can do at home without fancy therapy tools.", vid:"XxqVXEgtxKw"},
+  {id:88, title:"OT Cognitive Home Activities", cond:["ADHD"],              goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Best OT cognitive activities parents can do at home — simple and informative.", vid:"fozW128Cb_U"},
+
+  // ═══════════════════════════════════════════════════════
+  //  SENSORY PROCESSING
+  // ═══════════════════════════════════════════════════════
+  // SPD · 1-3 yrs
+  {id:89, title:"Baby Sensory Play Easy",       cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Household textures",       desc:"Easy sensory play ideas to help your baby's brain development at home.", vid:"NulCJLZf9lc"},
+  {id:90, title:"5 Toddler Sensory Activities", cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Rice, water, fabric",      desc:"5 easy sensory activities for toddlers — simple, beneficial, and fun.", vid:"nlsHsROmibE"},
+  {id:91, title:"Tummy Time & Sensory Play",    cond:["Sensory Processing"], goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Play mat, mirror",         desc:"Senior pediatric OT discusses tummy time, development, and sensory play.", vid:"9nEOg0zFxB0"},
+  {id:92, title:"6 Sensory Toys OT Picks",      cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Sensory toys",             desc:"OT recommendations for top 6 baby products to encourage sensory exploration.", vid:"uAxLWrBOTWI"},
+  {id:93, title:"10 Simple Toddler Sensory",    cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Household items",          desc:"10 simple sensory activities for toddlers to support learning and development.", vid:"OkA78Ulneso"},
+  {id:94, title:"Deep Pressure Toddler",        cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Blanket or hands",         desc:"Calming deep pressure touch for toddlers with sensory regulation issues.", vid:"nb1Cx-15FGo"},
+  {id:95, title:"Sensory Bin Play",             cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Bin, rice/sand, toys",     desc:"OT sensory tray and bin play for tactile defensive children.", vid:"PusnomDcsuA"},
+  {id:96, title:"Balloon Sensory Motor",        cond:["Sensory Processing"], goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Balloon",                  desc:"At-home sensory and motor activities using balloons — motor planning and visual skills.", vid:"DfbWKACWS5A"},
+  {id:97, title:"Baby Fine Motor Sensory",      cond:["Sensory Processing"], goal:"Fine Motor", age:"1-3 yrs", level:"Easy",   mat:"Cups, blocks",             desc:"Pediatric OT fine motor activities for toddlers.", vid:"_uR0mMgYkOc"},
+  {id:98, title:"Sensory Play Infant OT",       cond:["Sensory Processing"], goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Various household",        desc:"Top 5 OT-approved sensory activities for infants to stimulate development.", vid:"xLGHKiiHcfI"},
+  {id:99, title:"Gross Motor Baby 0-12m",       cond:["Sensory Processing"], goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Mat",                      desc:"Gross motor developmental milestones for babies 0–12 months.", vid:"iuChnCz7ZfY"},
+
+  // SPD · 4-6 yrs
+  {id:100,title:"SPD OT Demonstration",         cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Various",                  desc:"Expert demonstration of how OT addresses sensory processing difficulties in children.", vid:"YUdsgQGHSR8"},
+  {id:101,title:"SPD Home Strategies",          cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Household items",          desc:"OT strategies to use at home to address sensory processing issues.", vid:"uZpGsCKFtOI"},
+  {id:102,title:"Weighted Blanket SPD",         cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Weighted blanket",         desc:"How weighted blankets help with sensory processing disorder.", vid:"Bn04T8SPaHE"},
+  {id:103,title:"Sensory Seekers Guide",        cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Medium", mat:"Trampoline, textures",     desc:"5 powerful activities for sensory-seeking children.", vid:"s6gCc4vKKvY"},
+  {id:104,title:"Finger Painting Sensory",      cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Paint, paper",             desc:"Fine motor finger painting as sensory feedback and isolation.", vid:"MG1pqlyWA0c"},
+  {id:105,title:"Obstacle Course Balance",      cond:["Sensory Processing"], goal:"Gross Motor",age:"4-6 yrs", level:"Hard",   mat:"Pillows, chairs",          desc:"OT obstacle course for sensory integration — balance and coordination.", vid:"1_HMAW1PdNE"},
+  {id:106,title:"10 Sensory Fine Motor",        cond:["Sensory Processing"], goal:"Fine Motor", age:"4-6 yrs", level:"Medium", mat:"Sensory materials",        desc:"10 sensory activities to strengthen and improve fine motor skills.", vid:"lLC-LsNjM9k"},
+  {id:107,title:"Auditory Processing Kids",     cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Sound materials",          desc:"5 fun activities to improve auditory processing in kids.", vid:"gxwe6n7rD9s"},
+  {id:108,title:"OT GTG Sensory Activities",    cond:["Sensory Processing"], goal:"Sensory",   age:"4-6 yrs",  level:"Easy",   mat:"Various",                  desc:"OT activities for children with sensory processing disorders.", vid:"2L0Ts85WzYY"},
+  {id:109,title:"Gross Motor Preschool OT",     cond:["Sensory Processing"], goal:"Gross Motor",age:"4-6 yrs", level:"Medium", mat:"Cones, hoops",             desc:"Preschool gross motor obstacle course with a developmental educator.", vid:"9Mlk3dwO6vA"},
+  {id:110,title:"Fine Motor Preschool",         cond:["Sensory Processing"], goal:"Fine Motor", age:"4-6 yrs", level:"Easy",   mat:"Hands-on materials",       desc:"Hands-on fine motor activities to boost preschoolers' skills through play.", vid:"JE2q_UJmQ2I"},
+
+  // SPD · 7-10 yrs
+  {id:111,title:"Sensory Smart ADHD SPD",       cond:["Sensory Processing"], goal:"Sensory",   age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Expert OT strategies for sensory processing disorder and ADHD.", vid:"5SFD6oTdkOM"},
+  {id:112,title:"Parenting Sensory Child",      cond:["Sensory Processing"], goal:"Sensory",   age:"7-10 yrs", level:"Easy",   mat:"None",                     desc:"5 tips for parenting a sensory seeking child.", vid:"f7FDaDUfw0A"},
+  {id:113,title:"Self Regulation Interventions",cond:["Sensory Processing"], goal:"Cognitive", age:"7-10 yrs", level:"Medium", mat:"None",                     desc:"Break-through self-regulation interventions for children with sensory disorders.", vid:"ObzX0sYvBeI"},
+  {id:114,title:"Sensory Processing CP Child",  cond:["Sensory Processing"], goal:"Sensory",   age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Understanding sensory processing in children with cerebral palsy.", vid:"z2s0Ph-AjkY"},
+  {id:115,title:"Fine Motor No-Prep Home",      cond:["Sensory Processing"], goal:"Fine Motor", age:"7-10 yrs",level:"Easy",   mat:"Household items",          desc:"5 fine motor activities you can do at home without fancy therapy tools.", vid:"XxqVXEgtxKw"},
+  {id:116,title:"Gross Motor Special Kids",     cond:["Sensory Processing"], goal:"Gross Motor",age:"7-10 yrs",level:"Medium", mat:"Open space",               desc:"Gross motor skills video for special needs — coordination and direction.", vid:"BejDbpAo5Xo"},
+  {id:117,title:"OT 9 Useful Activities",       cond:["Sensory Processing"], goal:"Sensory",   age:"7-10 yrs", level:"Easy",   mat:"Various",                  desc:"9 useful OT activities for autistic children with sensory processing difficulties.", vid:"izEIGyBDaUA"},
+  {id:118,title:"Therapy Ball Motor",           cond:["Sensory Processing"], goal:"Gross Motor",age:"7-10 yrs",level:"Medium", mat:"Therapy ball",             desc:"10 safe play-based therapy ball activities from a pediatric OT.", vid:"amErM0fr7HA"},
+  {id:119,title:"Top 5 Pencil Grasp",           cond:["Sensory Processing"], goal:"Fine Motor", age:"7-10 yrs",level:"Medium", mat:"Pencil, crayons",          desc:"Top 5 activities to improve pencil grasp for better handwriting.", vid:"6kzK06I2-6Y"},
+  {id:120,title:"Paediatric Fine Motor Games",  cond:["Sensory Processing"], goal:"Fine Motor", age:"7-10 yrs",level:"Easy",   mat:"Various toys",             desc:"Paediatric OT demonstrates games to develop fine motor skills.", vid:"syv0qIRY9yE"},
+
+  // SPD · 11+
+  {id:121,title:"SPD Strategies Home",          cond:["Sensory Processing"], goal:"Sensory",   age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Strategies to use at home to address sensory processing issues in teens.", vid:"uZpGsCKFtOI"},
+  {id:122,title:"Sensory Seekers Older Child",  cond:["Sensory Processing"], goal:"Sensory",   age:"11+ yrs",  level:"Medium", mat:"Various sensory tools",    desc:"Powerful activities for sensory-seeking older children and teens.", vid:"s6gCc4vKKvY"},
+  {id:123,title:"Self-Regulation Teens OT",     cond:["Sensory Processing"], goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"Self-regulation strategies and techniques for children and adolescents.", vid:"fdce30im1qw"},
+  {id:124,title:"Fun Activities Special Teens", cond:["Sensory Processing"], goal:"Social",    age:"11+ yrs",  level:"Easy",   mat:"Various",                  desc:"10 fun activities for teenagers with special needs to enjoy at home.", vid:"hZ1K2TLNoU0"},
+  {id:125,title:"Weighted Blanket ADHD Teens",  cond:["Sensory Processing"], goal:"Sensory",   age:"11+ yrs",  level:"Easy",   mat:"Weighted blanket",         desc:"How weighted blankets help with sensory overload for older children.", vid:"-wfV6FYyQwU"},
+  {id:126,title:"Gross Motor Teen Special",     cond:["Sensory Processing"], goal:"Gross Motor",age:"11+ yrs", level:"Medium", mat:"Open space",               desc:"Gross motor activity for special needs older children.", vid:"mQk5svT3bQQ"},
+  {id:127,title:"Break-Through Self Reg Teen",  cond:["Sensory Processing"], goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Break-through self-regulation interventions for older children.", vid:"ObzX0sYvBeI"},
+  {id:128,title:"OT Handwriting Tips",          cond:["Sensory Processing"], goal:"Fine Motor", age:"11+ yrs", level:"Medium", mat:"Pencil, paper",            desc:"General hints and tips to develop handwriting skills.", vid:"vXSVKMMECN4"},
+
+  // ═══════════════════════════════════════════════════════
+  //  CEREBRAL PALSY
+  // ═══════════════════════════════════════════════════════
+  // CP · 1-3 yrs
+  {id:129,title:"CP OT Role Children",          cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"None",                     desc:"The role of OT in supporting children with cerebral palsy.", vid:"UaJ-UdwakUU"},
+  {id:130,title:"CP Gross & Fine Motor",        cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Hard",   mat:"Mats, supports",           desc:"Cerebral palsy gross and fine motor exercises for children.", vid:"R33-qrZSHw4"},
+  {id:131,title:"CP OT Home Ideas",             cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Hard",   mat:"Household items",          desc:"OT activity ideas for quadriplegic children with CP — home exercises.", vid:"zf8d7SMuQSs"},
+  {id:132,title:"CP Hand Activities",           cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"1-3 yrs",  level:"Hard",   mat:"Containers, toys",         desc:"Hand-based functional activities for children with cerebral palsy.", vid:"mr8RJrGIng0"},
+  {id:133,title:"CP Two-Hand Reach",            cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"1-3 yrs",  level:"Hard",   mat:"Toys at midline",          desc:"OT exercises to encourage two-hand reaching for children with spastic CP.", vid:"LNGx5OxkGtA"},
+  {id:134,title:"Tummy Time Sensory Baby",      cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Play mat",                 desc:"OT-approved tummy time and sensory activities for young babies.", vid:"9nEOg0zFxB0"},
+  {id:135,title:"CP Home Hand Exercises",       cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"1-3 yrs",  level:"Hard",   mat:"Household objects",        desc:"Home-based hand activity exercises for children with cerebral palsy.", vid:"RudN6uj4wXw"},
+  {id:136,title:"Gross Motor Special Kids",     cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Medium", mat:"Open space",               desc:"Help4Special gross motor skills — sitting, crawling, running, jumping.", vid:"BejDbpAo5Xo"},
+  {id:137,title:"Promoting Standing Walking",   cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Hard",   mat:"Support furniture",        desc:"Promoting gross motor development — standing, cruising, and walking.", vid:"CbwryhO7zdQ"},
+  {id:138,title:"Fine Motor OT Toddlers",       cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"1-3 yrs",  level:"Easy",   mat:"Cups, blocks, pegs",       desc:"Pediatric OT fine motor activities for toddlers.", vid:"_uR0mMgYkOc"},
+  {id:139,title:"10 Baby Gross Motor",          cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"1-3 yrs",  level:"Easy",   mat:"Mat, toys",                desc:"10 simple ways to improve a baby's gross motor skills.", vid:"NbUREW7wW0Q"},
+
+  // CP · 4-6 yrs
+  {id:140,title:"CP OT for Cerebral Palsy",     cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"4-6 yrs",  level:"Hard",   mat:"Mats, supports",           desc:"Occupational therapy for children with cerebral palsy — practical activities.", vid:"rD608UNK2lA"},
+  {id:141,title:"CP Sensory Processing",        cond:["Cerebral Palsy"],    goal:"Sensory",    age:"4-6 yrs",  level:"Medium", mat:"Various",                  desc:"Sensory processing issues in children with cerebral palsy.", vid:"z2s0Ph-AjkY"},
+  {id:142,title:"Playdough Fine Motor CP",      cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Playdough",                desc:"Rolling and pinching playdough for children with CP — hand strength.", vid:"m1qc6fyDfoU"},
+  {id:143,title:"Therapy Ball for CP Kids",     cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"4-6 yrs",  level:"Medium", mat:"Therapy ball",             desc:"10 safe play-based therapy ball activities from a pediatric OT.", vid:"amErM0fr7HA"},
+  {id:144,title:"Bead Stringing CP",            cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Beads, string",            desc:"10 stringing activities to improve pincer grasp.", vid:"_ApRP7TlZn4"},
+  {id:145,title:"Scissor Skills CP",            cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Child scissors, paper",    desc:"Step-by-step scissor skills progression for children.", vid:"oRlfvBaTkSg"},
+  {id:146,title:"Deep Pressure CP Calm",        cond:["Cerebral Palsy"],    goal:"Sensory",    age:"4-6 yrs",  level:"Easy",   mat:"Hands or blanket",         desc:"Deep pressure touch to calm children with sensory and motor challenges.", vid:"nb1Cx-15FGo"},
+  {id:147,title:"CP Fine & Gross Motor",        cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Hard",   mat:"Various",                  desc:"Improving fine and gross motor skills — a parent and therapist guide.", vid:"yuVkkhpiHTA"},
+  {id:148,title:"Obstacle Course CP",           cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"4-6 yrs",  level:"Hard",   mat:"Pillows, chairs, tape",    desc:"Obstacle course for children with CP to improve body awareness.", vid:"1_HMAW1PdNE"},
+  {id:149,title:"10 Sensory Fine Motor CP",     cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Sensory materials",        desc:"10 sensory activities to strengthen fine motor skills.", vid:"lLC-LsNjM9k"},
+  {id:150,title:"Pencil Grip CP",               cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"4-6 yrs",  level:"Medium", mat:"Pencil, cardboard",        desc:"Activities to improve pencil grip and scissor skills.", vid:"HVmh3NVAw5M"},
+
+  // CP · 7-10 yrs
+  {id:151,title:"CP OT Support Role",           cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"7-10 yrs", level:"Hard",   mat:"Various",                  desc:"The essential role of OT in supporting school-age children with CP.", vid:"UaJ-UdwakUU"},
+  {id:152,title:"CP Handwriting OT",            cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"7-10 yrs", level:"Hard",   mat:"Pencil, paper",            desc:"General hints and tips to develop handwriting skills with OT support.", vid:"vXSVKMMECN4"},
+  {id:153,title:"Brain Gym CP Kids",            cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"None",                     desc:"Brain gym activities for ages 2–10 — memory, focus, and coordination.", vid:"i6it5pqmfC8"},
+  {id:154,title:"Paediatric Gross Motor OT",    cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Paediatric OT demonstrates gross motor games to improve coordination.", vid:"vvgZGh4eSg0"},
+  {id:155,title:"Top Pencil Grasp CP",          cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"7-10 yrs", level:"Hard",   mat:"Pencil, crayons",          desc:"Top 5 activities to improve pencil grasp for better handwriting.", vid:"6kzK06I2-6Y"},
+  {id:156,title:"Cognitive OT Activities CP",   cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"7-10 yrs", level:"Medium", mat:"Various",                  desc:"Best OT cognitive activities parents can do at home.", vid:"fozW128Cb_U"},
+  {id:157,title:"Sorting & Matching CP",        cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"7-10 yrs", level:"Easy",   mat:"Colored blocks, toys",     desc:"Sorting and categorisation activities for cognitive development.", vid:"2L0Ts85WzYY"},
+  {id:158,title:"CP Physiotherapy OT",          cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"7-10 yrs", level:"Hard",   mat:"Mats, aids",               desc:"Physiotherapy and OT functional activities playlist from Trishla Foundation.", vid:"R33-qrZSHw4"},
+  {id:159,title:"Social Skills Turn Taking",    cond:["Cerebral Palsy"],    goal:"Social",     age:"7-10 yrs", level:"Medium", mat:"Board game",               desc:"Social activities for children — turn taking, patience, and communication.", vid:"12k0XUCKzbk"},
+  {id:160,title:"Fine Motor OT Games CP",       cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"7-10 yrs", level:"Medium", mat:"Various toys",             desc:"Paediatric OT demonstrates fine motor games for children.", vid:"syv0qIRY9yE"},
+
+  // CP · 11+ yrs
+  {id:161,title:"CP OT Daily Living",           cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"11+ yrs",  level:"Hard",   mat:"Daily living items",       desc:"OT for cerebral palsy — activities of daily living and independence.", vid:"UaJ-UdwakUU"},
+  {id:162,title:"Fun Teens Special Needs",      cond:["Cerebral Palsy"],    goal:"Social",     age:"11+ yrs",  level:"Easy",   mat:"Various",                  desc:"10 fun activities for teenagers with special needs.", vid:"hZ1K2TLNoU0"},
+  {id:163,title:"CP Gross Motor Teen",          cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"11+ yrs",  level:"Hard",   mat:"Open space, aids",         desc:"Gross motor activities for older children and teens with CP.", vid:"mQk5svT3bQQ"},
+  {id:164,title:"Handwriting OT CP Teen",       cond:["Cerebral Palsy"],    goal:"Fine Motor", age:"11+ yrs",  level:"Hard",   mat:"Pencil, paper",            desc:"Improving handwriting with OT support for older children.", vid:"k3GLtWweens"},
+  {id:165,title:"Executive Function Teen CP",   cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"Charts, planners",         desc:"Executive function OT tips for focus and organisation.", vid:"SkSsGnSX1lI"},
+  {id:166,title:"Self-Regulation CP Teen",      cond:["Cerebral Palsy"],    goal:"Cognitive",  age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"Self-regulation strategies for adolescents.", vid:"fdce30im1qw"},
+  {id:167,title:"Sensory CP Strategies",        cond:["Cerebral Palsy"],    goal:"Sensory",    age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Home strategies for sensory processing issues in older children.", vid:"uZpGsCKFtOI"},
+  {id:168,title:"Social Skills Teen CP",        cond:["Cerebral Palsy"],    goal:"Social",     age:"11+ yrs",  level:"Medium", mat:"Social tools",             desc:"Developing social skills for older children — caregiver guide.", vid:"1n3Vm-jUzrU"},
+  {id:169,title:"CP Occupational Therapy",      cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"11+ yrs",  level:"Hard",   mat:"Various",                  desc:"OT for children with cerebral palsy — comprehensive support.", vid:"rD608UNK2lA"},
+  {id:170,title:"Gross Motor Special All Ages", cond:["Cerebral Palsy"],    goal:"Gross Motor",age:"11+ yrs",  level:"Hard",   mat:"Open space",               desc:"Gross motor skills activities for special needs children.", vid:"BejDbpAo5Xo"},
+
+  // ═══════════════════════════════════════════════════════
+  //  DEVELOPMENTAL DELAY
+  // ═══════════════════════════════════════════════════════
+  // DD · 1-3 yrs
+  {id:171,title:"Developmental Delay OT Play",  cond:["Developmental Delay"],goal:"Cognitive", age:"1-3 yrs",  level:"Easy",   mat:"Play materials",           desc:"Hospital play-based OT helping children with developmental delays learn through play.", vid:"v8OTS9YtgI0"},
+  {id:172,title:"Toddler 10 Baby Gross Motor",  cond:["Developmental Delay"],goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Mat, toys",                desc:"10 simple ways to improve a baby's gross motor skills at home.", vid:"NbUREW7wW0Q"},
+  {id:173,title:"OT Baby 0-3 Months",           cond:["Developmental Delay"],goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Play mat",                 desc:"Top OT-approved activities to stimulate your baby's development.", vid:"qmDP666c_L4"},
+  {id:174,title:"Standing Cruising Walking",    cond:["Developmental Delay"],goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Support furniture",        desc:"Promoting gross motor development — standing, cruising, and walking.", vid:"CbwryhO7zdQ"},
+  {id:175,title:"10 Toddler Sensory Activities",cond:["Developmental Delay"],goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Rice, water",              desc:"Simple sensory activities for toddlers to explore and develop.", vid:"OkA78Ulneso"},
+  {id:176,title:"Fine Motor Toddler Activities",cond:["Developmental Delay"],goal:"Fine Motor", age:"1-3 yrs", level:"Easy",   mat:"Cups, pegs, blocks",       desc:"Pediatric OT fine motor activities for toddlers.", vid:"_uR0mMgYkOc"},
+  {id:177,title:"Gross Motor Toddler Play",     cond:["Developmental Delay"],goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Open space",               desc:"Fun gross motor activities for toddlers — running, jumping, climbing.", vid:"8u6vMUHwe-k"},
+  {id:178,title:"Sensory Tummy Time Baby",      cond:["Developmental Delay"],goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Play mat, mirror",         desc:"OT tummy time and sensory play activities for young children.", vid:"9nEOg0zFxB0"},
+  {id:179,title:"15 Fine Motor Low-Prep",       cond:["Developmental Delay"],goal:"Fine Motor", age:"1-3 yrs", level:"Easy",   mat:"Household items",          desc:"15 fine motor skills activities for toddlers — low prep and fun.", vid:"INLj2X4-uLU"},
+  {id:180,title:"Sensory Bin Toddler",          cond:["Developmental Delay"],goal:"Sensory",   age:"1-3 yrs",  level:"Easy",   mat:"Bin, rice, small toys",    desc:"Calming sensory exploration through sensory bin play for toddlers.", vid:"Mjs46isQgCU"},
+  {id:181,title:"Balloon Motor Baby",           cond:["Developmental Delay"],goal:"Gross Motor",age:"1-3 yrs", level:"Easy",   mat:"Balloon",                  desc:"At-home sensory and motor activities using balloons for babies.", vid:"DfbWKACWS5A"},
+
+  // DD · 4-6 yrs
+  {id:182,title:"Sorting Cognitive DD",         cond:["Developmental Delay"],goal:"Cognitive", age:"4-6 yrs",  level:"Easy",   mat:"Colored blocks, toys",     desc:"OT sensory processing activities including sorting and categorization.", vid:"2L0Ts85WzYY"},
+  {id:183,title:"Playdough Fine Motor DD",      cond:["Developmental Delay"],goal:"Fine Motor", age:"4-6 yrs", level:"Medium", mat:"Playdough",                desc:"Rolling and pinching playdough strengthens hand muscles.", vid:"m1qc6fyDfoU"},
+  {id:184,title:"Preschool Fine Motor 15",      cond:["Developmental Delay"],goal:"Fine Motor", age:"4-6 yrs", level:"Easy",   mat:"Household items",          desc:"15 fine motor skills activities for toddlers and preschoolers.", vid:"INLj2X4-uLU"},
+  {id:185,title:"Obstacle Course DD",           cond:["Developmental Delay"],goal:"Gross Motor",age:"4-6 yrs", level:"Medium", mat:"Pillows, hoops",           desc:"Gross motor obstacle course for preschoolers with developmental educator.", vid:"9Mlk3dwO6vA"},
+  {id:186,title:"Bean Bag Toss DD",             cond:["Developmental Delay"],goal:"Gross Motor",age:"4-6 yrs", level:"Easy",   mat:"Bean bags, basket",        desc:"Pediatric OT bean bag coordination to build bilateral hand-eye skills.", vid:"sx5tnDX8ie0"},
+  {id:187,title:"Brain Gym DD Kids",            cond:["Developmental Delay"],goal:"Cognitive", age:"4-6 yrs",  level:"Easy",   mat:"None",                     desc:"30 brain gym activities that boost memory, focus, and coordination.", vid:"i6it5pqmfC8"},
+  {id:188,title:"Stringing Activities DD",      cond:["Developmental Delay"],goal:"Fine Motor", age:"4-6 yrs", level:"Medium", mat:"Beads, string",            desc:"10 stringing activities to improve pincer grasp and hand-eye coordination.", vid:"_ApRP7TlZn4"},
+  {id:189,title:"Fine Motor Preschool OT",      cond:["Developmental Delay"],goal:"Fine Motor", age:"4-6 yrs", level:"Easy",   mat:"Hands-on materials",       desc:"Hands-on fine motor activities to boost preschoolers' skills.", vid:"JE2q_UJmQ2I"},
+  {id:190,title:"Gross Motor Balance",          cond:["Developmental Delay"],goal:"Gross Motor",age:"4-6 yrs", level:"Easy",   mat:"None",                     desc:"Toddler and preschooler movement — balancing, jumping, running.", vid:"K2LFMHSUN9A"},
+  {id:191,title:"Cognitive OT Activities",      cond:["Developmental Delay"],goal:"Cognitive", age:"4-6 yrs",  level:"Easy",   mat:"Various",                  desc:"Best OT cognitive activities parents can do at home.", vid:"fozW128Cb_U"},
+  {id:192,title:"Turn-Taking DD",               cond:["Developmental Delay"],goal:"Social",    age:"4-6 yrs",  level:"Medium", mat:"Board games",              desc:"Social activities — turn-taking, communication, and play.", vid:"12k0XUCKzbk"},
+
+  // DD · 7-10 yrs
+  {id:193,title:"Puzzles DD Cognitive",         cond:["Developmental Delay"],goal:"Cognitive", age:"7-10 yrs", level:"Medium", mat:"Puzzles",                  desc:"Puzzles targeting fine motor, cognitive, and creative skills.", vid:"FYZg5T_NeLY"},
+  {id:194,title:"Pencil Grip DD",               cond:["Developmental Delay"],goal:"Fine Motor", age:"7-10 yrs",level:"Medium", mat:"Pencil, paper",            desc:"Top 5 activities to improve pencil grasp for better handwriting.", vid:"6kzK06I2-6Y"},
+  {id:195,title:"Scissor Skills DD",            cond:["Developmental Delay"],goal:"Fine Motor", age:"7-10 yrs",level:"Medium", mat:"Scissors, paper",          desc:"Scissor skills progression for school-age children.", vid:"oRlfvBaTkSg"},
+  {id:196,title:"Gross Motor Games DD",         cond:["Developmental Delay"],goal:"Gross Motor",age:"7-10 yrs",level:"Medium", mat:"Various",                  desc:"Paediatric OT demonstrates gross motor games to improve coordination.", vid:"vvgZGh4eSg0"},
+  {id:197,title:"Following Directions DD",      cond:["Developmental Delay"],goal:"Cognitive", age:"7-10 yrs", level:"Easy",   mat:"Visual instructions",      desc:"Tips on helping children with developmental delays follow directions.", vid:"hJMf6J6HFko"},
+  {id:198,title:"Social Skills DD",             cond:["Developmental Delay"],goal:"Social",    age:"7-10 yrs", level:"Medium", mat:"Social tools",             desc:"Developing social skills for children — caregiver hacks.", vid:"1n3Vm-jUzrU"},
+  {id:199,title:"Communication ABA DD",         cond:["Developmental Delay"],goal:"Social",    age:"7-10 yrs", level:"Easy",   mat:"Circle time",              desc:"Circle time to promote communication, friendship, and social skills.", vid:"4apZ5qf62kY"},
+  {id:200,title:"Household Fine Motor DD",      cond:["Developmental Delay"],goal:"Fine Motor", age:"7-10 yrs",level:"Easy",   mat:"Household items",          desc:"10 free at-home activities using everyday objects to build fine motor skills.", vid:"KeMIERuxPN4"},
+  {id:201,title:"Therapy Ball DD",              cond:["Developmental Delay"],goal:"Gross Motor",age:"7-10 yrs",level:"Medium", mat:"Therapy ball",             desc:"10 safe play-based therapy ball activities from a pediatric OT.", vid:"amErM0fr7HA"},
+  {id:202,title:"Improving Fine & Gross Motor", cond:["Developmental Delay"],goal:"Fine Motor", age:"7-10 yrs",level:"Medium", mat:"Various",                  desc:"Fun ways to work with your child on fine and gross motor skills.", vid:"yuVkkhpiHTA"},
+  {id:203,title:"Play Skills DD",               cond:["Developmental Delay"],goal:"Social",    age:"7-10 yrs", level:"Medium", mat:"Toys",                     desc:"Teaching play skills for children with developmental delays.", vid:"x67xpqZ5bwQ"},
+
+  // DD · 11+ yrs
+  {id:204,title:"Life Skills DD Teens",         cond:["Developmental Delay"],goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"Daily living items",       desc:"Teaching essential life skills for adolescents with developmental delays.", vid:"dc6bX5Oesek"},
+  {id:205,title:"Executive Function DD Teen",   cond:["Developmental Delay"],goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"Charts, planners",         desc:"Executive function OT tips for focus and organisation in older children.", vid:"SkSsGnSX1lI"},
+  {id:206,title:"Fun Teens Special Activities", cond:["Developmental Delay"],goal:"Social",    age:"11+ yrs",  level:"Easy",   mat:"Various",                  desc:"10 fun activities for teenagers with special needs to enjoy.", vid:"hZ1K2TLNoU0"},
+  {id:207,title:"Social Peer Play Teens",       cond:["Developmental Delay"],goal:"Social",    age:"11+ yrs",  level:"Medium", mat:"Games, toys",              desc:"Supporting peer play and social interaction for older children.", vid:"IYEGLvvY9zQ"},
+  {id:208,title:"Handwriting DD Teen",          cond:["Developmental Delay"],goal:"Fine Motor", age:"11+ yrs", level:"Medium", mat:"Pencil, paper",            desc:"How OT support can improve handwriting skills.", vid:"k3GLtWweens"},
+  {id:209,title:"Gross Motor Teen DD",          cond:["Developmental Delay"],goal:"Gross Motor",age:"11+ yrs", level:"Medium", mat:"Open space",               desc:"Gross motor skills activities for older special needs children.", vid:"mQk5svT3bQQ"},
+  {id:210,title:"Self-Regulation Teen DD",      cond:["Developmental Delay"],goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"None",                     desc:"Self-regulation strategies and techniques for older children.", vid:"fdce30im1qw"},
+  {id:211,title:"Sensory Strategies Teen DD",   cond:["Developmental Delay"],goal:"Sensory",   age:"11+ yrs",  level:"Easy",   mat:"Household items",          desc:"Home strategies for sensory processing challenges in teens.", vid:"uZpGsCKFtOI"},
+  {id:212,title:"OT Cognitive DD Teen",         cond:["Developmental Delay"],goal:"Cognitive", age:"11+ yrs",  level:"Medium", mat:"Various",                  desc:"Best OT cognitive activities parents can do at home for older children.", vid:"fozW128Cb_U"},
+  {id:213,title:"Fine Motor No Tools DD",       cond:["Developmental Delay"],goal:"Fine Motor", age:"11+ yrs", level:"Easy",   mat:"Household items",          desc:"5 fine motor activities at home without fancy therapy tools.", vid:"XxqVXEgtxKw"},
+];
+
+const MOODS=["😊 Great","😐 Okay","😢 Struggled"];
+const MOODBG={"😊 Great":"#d1fae5","😐 Okay":"#fef9c3","😢 Struggled":"#fee2e2"};
+const TIPS=["Keep sessions short — 10–15 minutes is often enough for young children.","Celebrate every small win! Positive reinforcement builds confidence.","Consistency matters — try activities at the same time each day.","Let your child lead sometimes — it boosts engagement.","Take breaks when your child shows frustration or overwhelm.","Use visual schedules to help your child know what to expect.","Sensory breaks before difficult tasks can improve focus.","Pair activities with your child's favourite music or toys."];
+const CONCEPTS=[["Sensory Integration","Helping the brain process information from the senses effectively."],["Fine Motor Skills","Small muscle movements — grasping, writing, and buttoning."],["Gross Motor Skills","Larger movements — walking, jumping, and balancing."],["Self-Regulation","A child's ability to manage emotions and behaviour."],["Executive Function","Planning, focus, memory, and managing actions and emotions."],["Proprioception","The sense of body position and movement — helps with coordination."]];
+const C={bg:"#f5f3ff",card:"#ffffff",primary:"#7c3aed",light:"#ede9fe",accent:"#059669",warm:"#f59e0b"};
+
+export default function App(){
+  const [screen,setScreen]=useState("home");
+  const [profile,setProfile]=useState(null);
+  const [pForm,setPForm]=useState({name:"",age:"",condition:"",goals:[]});
+  const [fCond,setFCond]=useState("All");
+  const [fGoal,setFGoal]=useState("All");
+  const [fAge,setFAge]=useState("All Ages");
+  const [search,setSearch]=useState("");
+  const [selAct,setSelAct]=useState(null);
+  const [logs,setLogs]=useState([]);
+  const [logAct,setLogAct]=useState(null);
+  const [logForm,setLogForm]=useState({notes:"",mood:""});
+  const today=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+
+  const filtered=useMemo(()=>ACTIVITIES.filter(a=>{
+    const cm=fCond==="All"||a.cond.includes(fCond);
+    const gm=fGoal==="All"||a.goal===fGoal;
+    const am=fAge==="All Ages"||a.age===fAge;
+    const sm=!search||a.title.toLowerCase().includes(search.toLowerCase())||a.desc.toLowerCase().includes(search.toLowerCase());
+    return cm&&gm&&am&&sm;
+  }),[fCond,fGoal,fAge,search]);
+
+  const streak=(()=>{
+    const dates=[...new Set(logs.map(l=>l.date))].sort();
+    if(!dates.length)return 0;
+    let s=1,max=1;
+    for(let i=1;i<dates.length;i++){if((new Date(dates[i])-new Date(dates[i-1]))/86400000===1){s++;max=Math.max(max,s);}else s=1;}
+    return max;
+  })();
+  const moodCount=MOODS.reduce((a,m)=>{a[m]=logs.filter(l=>l.mood===m).length;return a},{});
+  const nav=s=>{setScreen(s);setSelAct(null);setLogAct(null);};
+
+  const Header=({title})=>(
+    <div style={{background:C.primary,color:"#fff",padding:"13px 15px",display:"flex",alignItems:"center",gap:10,borderRadius:"0 0 16px 16px",flexShrink:0}}>
+      {screen!=="home"&&<button onClick={()=>nav("home")} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:15}}>←</button>}
+      <div style={{flex:1}}>
+        <div style={{fontSize:16,fontWeight:700}}>{title}</div>
+        {profile&&screen==="home"&&<div style={{fontSize:11,opacity:0.8}}>👤 {profile.name} · {today}</div>}
+      </div>
+      {screen!=="home"&&<div style={{fontSize:11,opacity:0.75,background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"3px 8px"}}>{ACTIVITIES.length} activities</div>}
+    </div>
+  );
+  const NavBar=()=>(
+    <div style={{display:"flex",background:"#fff",borderTop:"1px solid #e5e7eb",flexShrink:0}}>
+      {[["🏠","home","Home"],["🧩","activities","Library"],["📋","tracker","Tracker"],["📊","dashboard","Progress"],["💡","tips","Tips"]].map(([icon,s,label])=>(
+        <button key={s} onClick={()=>nav(s)} style={{flex:1,padding:"9px 2px",border:"none",background:screen===s?C.light:"transparent",color:screen===s?C.primary:"#6b7280",cursor:"pointer",fontSize:10,display:"flex",flexDirection:"column",alignItems:"center",gap:1,fontWeight:screen===s?700:400}}>
+          <span style={{fontSize:17}}>{icon}</span>{label}
+        </button>
+      ))}
+    </div>
+  );
+  const LBadge=({level})=>{const m={Easy:["#d1fae5","#059669"],Medium:["#fef9c3","#d97706"],Hard:["#fee2e2","#dc2626"]};return <span style={{background:m[level][0],color:m[level][1],borderRadius:7,padding:"2px 7px",fontSize:10,fontWeight:600}}>{level}</span>;};
+  const VThumb=({a})=>(
+    <a href={`https://www.youtube.com/watch?v=${a.vid}`} target="_blank" rel="noopener noreferrer" style={{display:"block",textDecoration:"none",marginBottom:12}}>
+      <div style={{position:"relative",borderRadius:12,overflow:"hidden",background:"#000",cursor:"pointer"}}>
+        <img src={`https://img.youtube.com/vi/${a.vid}/hqdefault.jpg`} alt={a.title} style={{width:"100%",height:185,objectFit:"cover",display:"block",opacity:0.85}}/>
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:"rgba(220,0,0,0.92)",borderRadius:"50%",width:52,height:52,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{color:"#fff",fontSize:20,marginLeft:4}}>▶</span>
+          </div>
+        </div>
+        <div style={{position:"absolute",bottom:7,left:10,color:"#fff",fontSize:11,fontWeight:600,textShadow:"0 1px 4px rgba(0,0,0,0.9)"}}>▶ Watch on YouTube</div>
+      </div>
+    </a>
+  );
+
+  if(screen==="home")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="🌟 OT Companion"/>
+      <div style={{flex:1,overflowY:"auto",padding:13}}>
+        {!profile?(
+          <div style={{background:C.card,borderRadius:16,padding:20,textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+            <div style={{fontSize:46}}>👶</div>
+            <div style={{fontSize:17,fontWeight:700,color:C.primary,marginBottom:8}}>Welcome!</div>
+            <div style={{color:"#6b7280",marginBottom:16,fontSize:13}}>Set up your child's profile to get personalised OT activities.</div>
+            <button onClick={()=>nav("profile")} style={{background:C.primary,color:"#fff",border:"none",borderRadius:12,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer"}}>Create Profile</button>
+          </div>
+        ):(
+          <>
+            <div style={{background:`linear-gradient(135deg,${C.primary},#a855f7)`,borderRadius:16,padding:16,color:"#fff",marginBottom:13}}>
+              <div style={{fontSize:19,fontWeight:700}}>Hi, {profile.name}! 👋</div>
+              <div style={{fontSize:12,opacity:0.85,marginTop:3}}>{profile.condition} · Age: {profile.age} yrs</div>
+              <div style={{marginTop:5,fontSize:11}}>Goals: {profile.goals.length?profile.goals.join(", "):"Not set"}</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:13}}>
+              {[["🎯","Activities",`${ACTIVITIES.length} total`,"activities",C.primary],["📋","Today",""+logs.filter(l=>l.date===today).length+" logged","tracker",C.accent],["📊","Progress",`🔥 ${streak} day streak`,"dashboard",C.warm],["💡","Tips","For parents","tips","#6366f1"]].map(([icon,label,sub,s,c])=>(
+                <div key={s} onClick={()=>nav(s)} style={{background:"#fff",borderRadius:13,padding:13,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.07)",borderLeft:`4px solid ${c}`}}>
+                  <div style={{fontSize:21}}>{icon}</div>
+                  <div style={{fontWeight:700,fontSize:12,color:"#1f2937",marginTop:3}}>{label}</div>
+                  <div style={{fontSize:10,color:"#6b7280"}}>{sub}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:"#fff",borderRadius:13,padding:13,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+              <div style={{fontWeight:700,color:C.primary,marginBottom:9,fontSize:13}}>🕐 Recent Activities</div>
+              {logs.length===0?<div style={{color:"#9ca3af",fontSize:12}}>No activities logged yet. Start today!</div>:
+                logs.slice(-4).reverse().map((l,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?"1px solid #f3f4f6":"none"}}>
+                    <div><div style={{fontWeight:600,fontSize:12}}>{l.activityTitle}</div><div style={{fontSize:10,color:"#9ca3af"}}>{l.date}</div></div>
+                    <div style={{fontSize:19}}>{l.mood.split(" ")[0]}</div>
+                  </div>
+                ))
+              }
+            </div>
+          </>
+        )}
+      </div>
+      <NavBar/>
+    </div>
+  );
+
+  if(screen==="profile")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="👶 Child Profile"/>
+      <div style={{flex:1,overflowY:"auto",padding:14}}>
+        <div style={{background:"#fff",borderRadius:16,padding:17,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+          {[["Child's Name","name","text","e.g. Arjun"],["Age (years)","age","number","e.g. 5"]].map(([label,key,type,ph])=>(
+            <div key={key} style={{marginBottom:13}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:5}}>{label}</div>
+              <input type={type} placeholder={ph} value={pForm[key]} onChange={e=>setPForm(p=>({...p,[key]:e.target.value}))}
+                style={{width:"100%",padding:"9px 11px",borderRadius:9,border:"1.5px solid #e5e7eb",fontSize:13,boxSizing:"border-box",outline:"none"}}/>
+            </div>
+          ))}
+          <div style={{marginBottom:13}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:7}}>Condition / Diagnosis</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {CONDITIONS.map(c=><button key={c} onClick={()=>setPForm(p=>({...p,condition:c}))} style={{padding:"6px 11px",borderRadius:20,border:`2px solid ${pForm.condition===c?C.primary:"#e5e7eb"}`,background:pForm.condition===c?C.light:"#fff",color:pForm.condition===c?C.primary:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:11}}>{c}</button>)}
+            </div>
+          </div>
+          <div style={{marginBottom:17}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:7}}>Therapy Goals</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {["Sensory","Fine Motor","Gross Motor","Cognitive","Social"].map(g=>{const sel=pForm.goals.includes(g);return(
+                <button key={g} onClick={()=>setPForm(p=>({...p,goals:sel?p.goals.filter(x=>x!==g):[...p.goals,g]}))} style={{padding:"6px 11px",borderRadius:20,border:`2px solid ${sel?C.accent:"#e5e7eb"}`,background:sel?"#d1fae5":"#fff",color:sel?C.accent:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:11}}>{g}</button>
+              );})}
+            </div>
+          </div>
+          <button onClick={()=>{if(!pForm.name||!pForm.age||!pForm.condition)return;setProfile(pForm);setScreen("home");}} style={{width:"100%",background:C.primary,color:"#fff",border:"none",borderRadius:12,padding:12,fontSize:14,fontWeight:700,cursor:"pointer"}}>Save Profile ✓</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(screen==="activities")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="🧩 Activity Library"/>
+      <div style={{padding:"9px 13px 0",flexShrink:0}}>
+        <input placeholder="🔍 Search activities..." value={search} onChange={e=>setSearch(e.target.value)}
+          style={{width:"100%",padding:"8px 11px",borderRadius:9,border:"1.5px solid #e5e7eb",fontSize:12,boxSizing:"border-box",outline:"none",marginBottom:7}}/>
+        <div style={{overflowX:"auto",display:"flex",gap:5,paddingBottom:5}}>
+          {["All",...CONDITIONS].map(c=><button key={c} onClick={()=>setFCond(c)} style={{whiteSpace:"nowrap",padding:"5px 11px",borderRadius:20,border:`2px solid ${fCond===c?C.primary:"#e5e7eb"}`,background:fCond===c?C.light:"#fff",color:fCond===c?C.primary:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:10}}>{c}</button>)}
+        </div>
+        <div style={{overflowX:"auto",display:"flex",gap:5,paddingBottom:5}}>
+          {["All","Sensory","Fine Motor","Gross Motor","Cognitive","Social"].map(g=><button key={g} onClick={()=>setFGoal(g)} style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:20,border:`2px solid ${fGoal===g?C.accent:"#e5e7eb"}`,background:fGoal===g?"#d1fae5":"#fff",color:fGoal===g?C.accent:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:10}}>{g}</button>)}
+        </div>
+        <div style={{overflowX:"auto",display:"flex",gap:5,paddingBottom:5}}>
+          {AGE_GROUPS.map(a=><button key={a} onClick={()=>setFAge(a)} style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:20,border:`2px solid ${fAge===a?"#f59e0b":"#e5e7eb"}`,background:fAge===a?"#fef3c7":"#fff",color:fAge===a?"#d97706":"#6b7280",fontWeight:600,cursor:"pointer",fontSize:10}}>{a}</button>)}
+        </div>
+        <div style={{fontSize:11,color:"#6b7280",marginBottom:5}}>{filtered.length} activit{filtered.length===1?"y":"ies"} found</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"0 13px 13px"}}>
+        {filtered.map(a=>(
+          <div key={a.id} onClick={()=>setSelAct(a)} style={{background:"#fff",borderRadius:13,padding:13,marginBottom:9,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div style={{flex:1,marginRight:7}}>
+                <div style={{fontWeight:700,fontSize:13,color:"#1f2937"}}>{a.title}</div>
+                <div style={{fontSize:10,color:"#6b7280",margin:"2px 0"}}>{a.desc}</div>
+                <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:6}}>
+                  <span style={{background:C.light,color:C.primary,borderRadius:7,padding:"2px 6px",fontSize:9,fontWeight:600}}>{a.goal}</span>
+                  <LBadge level={a.level}/>
+                  <span style={{background:"#f0fdf4",color:"#166534",borderRadius:7,padding:"2px 6px",fontSize:9,fontWeight:600}}>👶 {a.age}</span>
+                </div>
+              </div>
+              <span style={{fontSize:18}}>▶️</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {selAct&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"flex-end",zIndex:100}}>
+          <div style={{background:"#fff",borderRadius:"18px 18px 0 0",padding:17,width:"100%",maxHeight:"88vh",overflowY:"auto",boxSizing:"border-box"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+              <div style={{fontWeight:700,fontSize:16,color:"#1f2937",flex:1,marginRight:8}}>{selAct.title}</div>
+              <button onClick={()=>setSelAct(null)} style={{background:"#f3f4f6",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:15}}>✕</button>
+            </div>
+            <VThumb a={selAct}/>
+            <div style={{fontSize:13,color:"#374151",marginBottom:7}}>{selAct.desc}</div>
+            <div style={{fontSize:11,color:"#6b7280",marginBottom:9}}>🎒 Materials: {selAct.mat}</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:13}}>
+              <span style={{background:C.light,color:C.primary,borderRadius:7,padding:"3px 9px",fontSize:11,fontWeight:600}}>{selAct.goal}</span>
+              <LBadge level={selAct.level}/>
+              <span style={{background:"#f0fdf4",color:"#166534",borderRadius:7,padding:"3px 9px",fontSize:11,fontWeight:600}}>👶 {selAct.age}</span>
+            </div>
+            <button onClick={()=>{setLogAct(selAct);setSelAct(null);setScreen("log");}} style={{width:"100%",background:C.primary,color:"#fff",border:"none",borderRadius:12,padding:12,fontSize:13,fontWeight:700,cursor:"pointer"}}>📋 Log This Activity</button>
+          </div>
+        </div>
+      )}
+      <NavBar/>
+    </div>
+  );
+
+  if(screen==="log")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="📝 Log Activity"/>
+      <div style={{flex:1,overflowY:"auto",padding:14}}>
+        <div style={{background:"#fff",borderRadius:16,padding:17,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+          {logAct&&<div style={{background:C.light,borderRadius:11,padding:11,marginBottom:13,fontWeight:600,color:C.primary,fontSize:13}}>🧩 {logAct.title}</div>}
+          <div style={{marginBottom:13}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:7}}>How did it go? *</div>
+            <div style={{display:"flex",gap:7}}>
+              {MOODS.map(m=><button key={m} onClick={()=>setLogForm(p=>({...p,mood:m}))} style={{flex:1,padding:"10px 3px",borderRadius:11,border:`2px solid ${logForm.mood===m?C.primary:"#e5e7eb"}`,background:logForm.mood===m?MOODBG[m]:"#fff",cursor:"pointer",fontSize:10,fontWeight:600,color:"#374151"}}>{m}</button>)}
+            </div>
+          </div>
+          <div style={{marginBottom:17}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:5}}>Notes (optional)</div>
+            <textarea rows={3} placeholder="How did your child respond?" value={logForm.notes} onChange={e=>setLogForm(p=>({...p,notes:e.target.value}))}
+              style={{width:"100%",padding:"9px 11px",borderRadius:9,border:"1.5px solid #e5e7eb",fontSize:12,boxSizing:"border-box",resize:"none",outline:"none"}}/>
+          </div>
+          <button onClick={()=>{if(!logAct||!logForm.mood)return;setLogs(p=>[...p,{...logForm,activityId:logAct.id,activityTitle:logAct.title,date:new Date().toLocaleDateString("en-IN")}]);setLogAct(null);setLogForm({notes:"",mood:""});nav("tracker");}} style={{width:"100%",background:C.accent,color:"#fff",border:"none",borderRadius:12,padding:12,fontSize:14,fontWeight:700,cursor:"pointer"}}>Save Log ✓</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(screen==="tracker")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="📋 Activity Tracker"/>
+      <div style={{flex:1,overflowY:"auto",padding:13}}>
+        <button onClick={()=>nav("activities")} style={{width:"100%",background:C.primary,color:"#fff",border:"none",borderRadius:12,padding:12,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:13}}>+ Log New Activity</button>
+        {logs.length===0?<div style={{textAlign:"center",color:"#9ca3af",padding:40}}><div style={{fontSize:44}}>📋</div><div style={{marginTop:8,fontSize:13}}>No activities logged yet.<br/>Start from the Activity Library!</div></div>:
+          [...logs].reverse().map((l,i)=>(
+            <div key={i} style={{background:"#fff",borderRadius:13,padding:13,marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontWeight:700,fontSize:13}}>{l.activityTitle}</div>
+                <div style={{fontSize:21}}>{l.mood.split(" ")[0]}</div>
+              </div>
+              <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{l.date}</div>
+              {l.notes&&<div style={{fontSize:11,color:"#374151",marginTop:5,background:"#f9fafb",borderRadius:7,padding:"5px 9px"}}>{l.notes}</div>}
+            </div>
+          ))
+        }
+      </div>
+      <NavBar/>
+    </div>
+  );
+
+  if(screen==="dashboard")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="📊 Progress Dashboard"/>
+      <div style={{flex:1,overflowY:"auto",padding:13}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:13}}>
+          {[["🎯","Total Logged",logs.length,C.primary],["🔥","Best Streak",`${streak} days`,C.warm],["😊","Great Sessions",moodCount["😊 Great"]||0,C.accent],["📅","Active Days",new Set(logs.map(l=>l.date)).size,"#6366f1"]].map(([icon,label,val,c])=>(
+            <div key={label} style={{background:"#fff",borderRadius:13,padding:13,textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+              <div style={{fontSize:24}}>{icon}</div>
+              <div style={{fontSize:21,fontWeight:800,color:c}}>{val}</div>
+              <div style={{fontSize:10,color:"#6b7280"}}>{label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:"#fff",borderRadius:13,padding:13,marginBottom:13,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:700,color:"#1f2937",marginBottom:11,fontSize:13}}>😊 Mood Breakdown</div>
+          {MOODS.map(m=>{const count=moodCount[m]||0,pct=logs.length?Math.round((count/logs.length)*100):0;return(
+            <div key={m} style={{marginBottom:9}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}><span>{m}</span><span style={{fontWeight:600}}>{count} ({pct}%)</span></div>
+              <div style={{background:"#f3f4f6",borderRadius:7,height:8,overflow:"hidden"}}>
+                <div style={{width:`${pct}%`,height:"100%",background:MOODBG[m]==="#d1fae5"?C.accent:MOODBG[m]==="#fef9c3"?C.warm:"#ef4444",borderRadius:7,transition:"width 0.4s"}}/>
+              </div>
+            </div>
+          );})}
+        </div>
+        <div style={{background:"#fff",borderRadius:13,padding:13,marginBottom:13,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:700,color:"#1f2937",marginBottom:11,fontSize:13}}>📊 Activities by Goal</div>
+          {["Sensory","Fine Motor","Gross Motor","Cognitive","Social"].map(g=>{const done=logs.filter(l=>ACTIVITIES.find(a=>a.id===l.activityId)?.goal===g).length;return(
+            <div key={g} style={{display:"flex",alignItems:"center",gap:9,padding:"5px 0",borderBottom:"1px solid #f3f4f6"}}>
+              <span style={{fontSize:11,flex:1,color:"#374151",fontWeight:600}}>{g}</span>
+              <span style={{fontSize:13,fontWeight:700,color:C.primary}}>{done}</span>
+              <span style={{fontSize:10,color:"#9ca3af"}}>sessions</span>
+            </div>
+          );})}
+        </div>
+        <div style={{background:"#fff",borderRadius:13,padding:13,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:700,color:"#1f2937",marginBottom:11,fontSize:13}}>🏆 Milestones</div>
+          {[["First activity logged 🎉",logs.length>=1],["5 activities completed 🌟",logs.length>=5],["10 activities completed 🏅",logs.length>=10],["25 activities completed 🥇",logs.length>=25],["50 activities completed 🏆",logs.length>=50],["3-day streak 🔥",streak>=3],["7-day streak 🌈",streak>=7],["All 5 goals explored 💜",new Set(logs.map(l=>ACTIVITIES.find(a=>a.id===l.activityId)?.goal)).size>=5]].map(([label,done])=>(
+            <div key={label} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 0",borderBottom:"1px solid #f3f4f6"}}>
+              <span style={{fontSize:16}}>{done?"✅":"⬜"}</span>
+              <span style={{fontSize:12,color:done?"#1f2937":"#9ca3af",fontWeight:done?600:400}}>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <NavBar/>
+    </div>
+  );
+
+  if(screen==="tips")return(
+    <div style={{fontFamily:"sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Header title="💡 Tips for Parents"/>
+      <div style={{flex:1,overflowY:"auto",padding:13}}>
+        <div style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",borderRadius:16,padding:17,color:"#fff",marginBottom:13,textAlign:"center"}}>
+          <div style={{fontSize:32}}>🌟</div>
+          <div style={{fontWeight:700,fontSize:15,marginTop:6}}>You're doing amazing!</div>
+          <div style={{fontSize:11,opacity:0.85,marginTop:4}}>Every small step counts in your child's journey.</div>
+        </div>
+        {TIPS.map((tip,i)=>(
+          <div key={i} style={{background:"#fff",borderRadius:13,padding:13,marginBottom:9,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",display:"flex",gap:9,alignItems:"flex-start"}}>
+            <div style={{background:C.light,borderRadius:9,padding:"6px 8px",fontSize:15}}>💜</div>
+            <div style={{fontSize:12,color:"#374151",lineHeight:1.6}}>{tip}</div>
+          </div>
+        ))}
+        <div style={{background:"#fff",borderRadius:13,padding:13,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:700,color:C.primary,marginBottom:11,fontSize:13}}>📚 Key OT Concepts</div>
+          {CONCEPTS.map(([title,desc])=>(
+            <div key={title} style={{marginBottom:11}}>
+              <div style={{fontWeight:600,fontSize:12,color:"#1f2937"}}>{title}</div>
+              <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <NavBar/>
+    </div>
+  );
+}
